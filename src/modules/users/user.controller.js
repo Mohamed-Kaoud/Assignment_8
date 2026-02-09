@@ -8,5 +8,6 @@ userRouter.post("/login" , US.login)
 userRouter.patch("/" ,auth, US.updateUser)
 userRouter.delete("/" ,auth, US.deleteUser)
 userRouter.get("/" ,auth, US.getUser)
+userRouter.get("/getUserByEmail" , US.getUserByEmail)
 
 export default userRouter

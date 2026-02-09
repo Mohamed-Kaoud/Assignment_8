@@ -1,7 +1,7 @@
 import userModel from "../../DB/models/user.model.js";
-import bcrypt from "bcrypt"
+import bcrypt from "bcrypt";
 import CryptoJS from "crypto-js";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
 export const signup = async (req, res) => {
   try {
@@ -15,14 +15,20 @@ export const signup = async (req, res) => {
     if (userExist) {
       return res.status(409).json({ message: `Email ${email} already exist` });
     }
-    const hashedPassword = bcrypt.hashSync(password,10)
-    
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
     const encryptedPhone = CryptoJS.AES.encrypt(
       phone,
-      "secretkey123"
-    ).toString()
+      "secretkey123",
+    ).toString();
 
-    const user = await userModel.create({ name, email, password:hashedPassword, phone:encryptedPhone, age });
+    const user = await userModel.create({
+      name,
+      email,
+      password: hashedPassword,
+      phone: encryptedPhone,
+      age,
+    });
     return res.status(201).json({ message: `User added successfully`, user });
   } catch (error) {
     return res.status(500).json({ Error: error.message });
@@ -41,15 +47,13 @@ export const login = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: `Invalid email or password` });
     }
-    const match = bcrypt.compareSync(password,user.password)
-    if(!match){
+    const match = bcrypt.compareSync(password, user.password);
+    if (!match) {
       return res.status(400).json({ message: `Invalid email or password` });
     }
-    const token = jwt.sign(
-      {userId:user._id},
-      "loginSecretKey",
-      {expiresIn:"1h"}
-    )
+    const token = jwt.sign({ userId: user._id }, "loginSecretKey", {
+      expiresIn: "1h",
+    });
     return res.status(200).json({ message: `Login successful`, token });
   } catch (error) {
     return res.status(500).json({ Error: error.message });
@@ -61,20 +65,24 @@ export const updateUser = async (req, res) => {
     const userId = req.userId;
     const { name, email, phone, age } = req.body;
     if (req.body.password) {
-      return res.status(400).json({ message: "You cannot update password here" });
+      return res
+        .status(400)
+        .json({ message: "You cannot update password here" });
     }
 
     if (email) {
       const emailExist = await userModel.findOne({ email });
       if (emailExist) {
-        return res.status(409).json({ message: `Email ${email} already exist` });
+        return res
+          .status(409)
+          .json({ message: `Email ${email} already exist` });
       }
     }
 
     const updatedUser = await userModel.findByIdAndUpdate(
       userId,
       { name, email, phone, age },
-      { new: true }
+      { new: true },
     );
 
     return res.status(200).json({
@@ -105,12 +113,25 @@ export const deleteUser = async (req, res) => {
 
 export const getUser = async (req, res) => {
   try {
-    const userId = req.userId
-    const user = await userModel.findById(userId).select("-__v")
+    const userId = req.userId;
+    const user = await userModel.findById(userId).select("-__v");
     if (!user) {
       return res.status(404).json({ message: `User not found` });
     }
     return res.status(200).json(user);
+  } catch (error) {
+    return res.status(500).json({ Error: error.message });
+  }
+};
+
+export const getUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = userModel.findOne({ email });
+    if (!user) {
+      res.status(404).json({ message: `User not found` });
+    }
+    res.status(200).json(user);
   } catch (error) {
     return res.status(500).json({ Error: error.message });
   }
